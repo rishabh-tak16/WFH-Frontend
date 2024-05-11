@@ -1,5 +1,5 @@
 import React from 'react'
-import RegisterForm from '../../organisms/registerform/registerform'
+import RegisterForm from '../../organisms/RegisterForm/RegisterForm'
 
 export default function Registerpage() {
   return (
