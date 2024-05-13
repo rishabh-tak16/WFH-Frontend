@@ -1,1 +1,0 @@
-type InputField = ChangeEvent<HTMLInputElement>;
