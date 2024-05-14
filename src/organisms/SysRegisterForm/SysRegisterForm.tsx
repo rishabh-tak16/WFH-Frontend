@@ -1,12 +1,14 @@
 import { useState } from "react";
 import React from "react";
-import { Button, Input, Form, InputGroup } from "rsuite";
+import { Button, Input, InputGroup } from "rsuite";
 import EyeIcon from "@rsuite/icons/legacy/Eye";
 import EyeSlashIcon from "@rsuite/icons/legacy/EyeSlash";
-import styles from "./SysRegisterForm.module.scss";
 import axios from "axios";
 import classNames from "classnames/bind";
 import { Link } from "react-router-dom";
+
+import styles from "./SysRegisterForm.module.scss";
+
 
 export default function RegisterForm() {
   const [firstName, setFirstName] = useState("");
