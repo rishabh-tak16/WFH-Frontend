@@ -1,11 +1,14 @@
 import { useState } from "react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Input, InputGroup } from "rsuite";
 import EyeIcon from "@rsuite/icons/legacy/Eye";
 import EyeSlashIcon from "@rsuite/icons/legacy/EyeSlash";
 import axios from "axios";
 import classNames from "classnames/bind";
 import { Link } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 import styles from "./SysRegisterForm.module.scss";
 
@@ -20,6 +23,8 @@ export default function RegisterForm() {
 
   const cx = classNames.bind(styles);
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = { firstName, lastName, email, password, dob };
@@ -29,9 +34,12 @@ export default function RegisterForm() {
         "http://localhost:5000/sysuser-register",
         { firstName, lastName, email, password, dob }
       );
+      toast.success("User registered Sucessfully")
+      navigate("/sys-login")
       console.log(response);
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast.error("Error Submitting");
     }
   };
 
@@ -40,6 +48,7 @@ export default function RegisterForm() {
   };
 
   return (
+    <>
     <div className={cx("regcontainer")}>
       <form onSubmit={handleSubmit}>
         <div className={cx("wrapper")}>
@@ -123,5 +132,7 @@ export default function RegisterForm() {
         </div>
       </form>
     </div>
+    <ToastContainer/>
+    </>
   );
 }

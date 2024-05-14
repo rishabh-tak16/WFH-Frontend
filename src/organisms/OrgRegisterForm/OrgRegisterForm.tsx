@@ -33,10 +33,10 @@ export default function OrgRegisterForm() {
         "http://localhost:5000/orguser-register",
         { organizationName, firstName, lastName, email, password, dob, doj }
       );
+      toast.success("User registered Sucessfully")
       console.log(response);
     } catch (error: any) {
-      // toast.success("HELLO")
-      alert( error.response.data.msg)
+      toast.error("Something Problematic");
       console.error("Error submitting form:", error.response.data.msg);
     }
   };
@@ -149,7 +149,7 @@ export default function OrgRegisterForm() {
           </div>
         </form>
       </div>
-      {/* <ToastContainer /> */}
+      <ToastContainer />
     </>
   );
 }

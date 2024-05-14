@@ -4,10 +4,11 @@ import axios from "axios";
 import classNames from "classnames/bind";
 import EyeIcon from "@rsuite/icons/legacy/Eye";
 import EyeSlashIcon from "@rsuite/icons/legacy/EyeSlash";
+
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-
+import Cookie from 'js-cookie'
 import styles from "./SysLoginForm.module.scss";
 
 
@@ -37,10 +38,18 @@ export default function SysLoginform() {
       console.log(resp);
       if (resp.status === 200) {
         toast.success("Login Sucessfully")
+
+        console.log(resp.data.accessToken);
+        Cookie.set('accessToken', resp.data.accessToken)
+
+
         setTimeout(() => { navigate("/sys-dashboard") }, 2000);
 
       }
-      return resp.data;
+      console.log("HHHHHHH");
+
+
+      // return resp.data;
     } catch (err) {
       console.log(err);
       toast.error("Invalid Login Credential")
