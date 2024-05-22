@@ -1,9 +1,7 @@
-import { Input, Button, InputGroup } from "rsuite";
+import { Input, Button } from "rsuite";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import EyeIcon from "@rsuite/icons/legacy/Eye";
-import EyeSlashIcon from "@rsuite/icons/legacy/EyeSlash";
 import styles from "./OrgRegisterForm.module.scss";
 import "./OrgRegisterForm.module.scss";
 
@@ -11,30 +9,28 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function OrgRegisterForm() {
+
   const [organizationName,setOrganizationName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [dob, setDOB] = useState("");
   const [doj, setDOJ] = useState("");
-  const [visible, setVisible] = useState(false);
 
-  const handleChange = () => {
-    setVisible(!visible);
-  };
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = { organizationName, firstName, lastName, email, password, dob, doj };
+    const formData = { organizationName, firstName, lastName, email,dob, doj };
     console.log(formData);
     try {
       const response = await axios.post(
         "http://localhost:5000/orguser-register",
-        { organizationName, firstName, lastName, email, password, dob, doj }
+        { organizationName, firstName, lastName, email, dob, doj }
       );
       toast.success("User registered Sucessfully")
       console.log(response);
+      navigate("/org-login");
     } catch (error: any) {
       toast.error("Something Problematic");
       console.error("Error submitting form:", error.response.data.msg);
@@ -95,24 +91,6 @@ export default function OrgRegisterForm() {
                   }}
                   required
                 />
-              </div>
-
-              <div>
-                <label>Password</label>
-                <InputGroup style={{ marginBottom: 10 }}>
-                  <Input
-                    type={visible === false ? "password" : "text"}
-                    placeholder={"password"}
-                    style={{ width: 260 }}
-                    onChange={(value) => {
-                      setPassword(value);
-                    }}
-                    required={true}
-                  />
-                  <InputGroup.Addon onClick={handleChange}>
-                    {visible ? <EyeIcon /> : <EyeSlashIcon />}
-                  </InputGroup.Addon>
-                </InputGroup>
               </div>
               <div>
                 <label>Date of Birth:</label>

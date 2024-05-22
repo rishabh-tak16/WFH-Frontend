@@ -5,7 +5,6 @@ import OrgRegisterForm from "../../organisms/OrgRegisterForm/OrgRegisterForm";
 export default function OrgRegisterPage() {
   return (
     <div>
-      <h3>Organization-User</h3>
       <OrgRegisterForm />
     </div>
   );

@@ -1,9 +1,7 @@
 import { useState } from "react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Input, InputGroup } from "rsuite";
-import EyeIcon from "@rsuite/icons/legacy/Eye";
-import EyeSlashIcon from "@rsuite/icons/legacy/EyeSlash";
+import { Button, Input } from "rsuite";
 import axios from "axios";
 import classNames from "classnames/bind";
 import { Link } from "react-router-dom";
@@ -17,9 +15,7 @@ export default function RegisterForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [dob, setDOB] = useState("");
-  const [visible, setVisible] = useState(false);
 
   const cx = classNames.bind(styles);
 
@@ -27,12 +23,12 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = { firstName, lastName, email, password, dob };
+    const formData = { firstName, lastName, email, dob };
     console.log(formData);
     try {
       const response = await axios.post(
         "http://localhost:5000/sysuser-register",
-        { firstName, lastName, email, password, dob }
+        formData
       );
       toast.success("User registered Sucessfully")
       navigate("/sys-login")
@@ -41,10 +37,6 @@ export default function RegisterForm() {
       console.error("Error submitting form:", error);
       toast.error("Error Submitting");
     }
-  };
-
-  const handleChange = () => {
-    setVisible(!visible);
   };
 
   return (
@@ -90,24 +82,6 @@ export default function RegisterForm() {
                 required={true}
               />
             </div>
-            <div>
-            <label>Password</label>
-            <InputGroup style={{marginBottom:10}}>
-              <Input
-                type={visible === false ? "password" : "text"}
-                placeholder={"password"}
-                style={{width: 260}}
-                onChange={(value) => {
-                  setPassword(value);
-                }}
-                required={true}
-              />
-              <InputGroup.Addon onClick={handleChange}>
-                {visible ? <EyeIcon /> : <EyeSlashIcon />}
-              </InputGroup.Addon>
-            </InputGroup>
-            </div>
-
             <div>
               <label>Date of Birth: </label>
             <Input
