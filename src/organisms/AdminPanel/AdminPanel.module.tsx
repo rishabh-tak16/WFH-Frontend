@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, ButtonGroup, Modal, Input } from "rsuite";
+import { Table, Button, ButtonGroup, Modal, Input, SelectPicker } from "rsuite";
 import axios from "axios";
-const { Column, HeaderCell, Cell } = Table;
+import ModalHeader from "rsuite/esm/Modal/ModalHeader";
+import ModalBody from "rsuite/esm/Modal/ModalBody";
+import ModalFooter from "rsuite/esm/Modal/ModalFooter";
 
 type Application = {
   approvedDate: string;
@@ -14,71 +16,113 @@ type Application = {
 };
 
 type AdminProp = {
-  orgName: string;
-  userEmail: string;
+  orgName: string | undefined;
+  userEmail: string | undefined;
 };
 
 function AdminPanel({ orgName, userEmail }: AdminProp) {
-  const [updated, setUpdated] = useState(false);
+  const { Column, HeaderCell, Cell } = Table;
   const [allApplication, setAllApplication] = useState<Application[]>([]);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
+  //states for filter
+  const [filterEmail, setFilterEmail] = useState("");
+  const [filterReason, setFilterReason] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string | number | null>(null);
+  const [filterApprovedBy, setFilterApprovedBy] = useState("");
+
   const [rejectReason, setRejectReason] = useState("");
   const [ID, setID] = useState("");
   const [rejectionReasonForm, setRejectionReasonForm] = useState(false);
+  const [FilterModal, setFilterModal] = useState(false);
 
   const handleClose = () => setRejectionReasonForm(false);
+  const closeFilterModal = () => setFilterModal(false);
 
   const setValueRejectReason = (value: string) => {
     setRejectReason(value);
   };
 
-  const getWfhApplications = async () => {
-    const URL = `http://localhost:5000/all-application`;
-
+  const getWfhApplicationsFiltered = async () => {
+    const URL = `http://localhost:5000/all-application/${orgName}/filter?email=${filterEmail}&reason=${filterReason}&status=${filterStatus}&approvedBy=${filterApprovedBy}`;
+    console.log(URL);
+    
     try {
-      const application = await axios.post(URL, { orgName });
-
+      const application = await axios.get(URL);
       setAllApplication(application.data.applications);
     } catch (err) {
       console.log(err);
     }
+    setFilterEmail("");
+    setFilterReason("");
+    setFilterApprovedBy("");
+    setFilterStatus("");
   };
 
-  const leaveReq = async (status: number) => {
-    if (ID === "" || !ID || rejectReason === "" || !rejectReason) {
-      // toast.error("Fill all the details");
+  const statusOptions = [
+    { label: "Pending", value: 2 },
+    { label: "Approved", value: 0 },
+    { label: "Rejected", value: 1 },
+  ];
+
+  const leaveReq = async (status: number,ID: string = "") => {
+    if (ID === "" || !ID) {
+      console.log("Error in leavReq>>>", ID);
       return;
     }
 
     const URL = "http://localhost:5000/application/status";
 
     try {
-      const api = await axios.put(
-        URL,
-        { _id: ID, statusValue: status, userEmail, rejectedReason: rejectReason }
-      );
+      const api = await axios.put(URL, {
+        _id: ID,
+        statusValue: status,
+        userEmail,
+        rejectedReason: rejectReason,
+      });
 
       console.log(api.data);
-      setUpdated(!updated)
-      
     } catch (err) {
       console.log(err);
     }
 
-    setRejectReason("")
-    setID("")
+    setRejectReason("");
+    setID("");
     handleClose();
   };
 
-  useEffect(() => {
-    getWfhApplications();
-  }, [updated]);
+  useEffect(() => {    
+    getWfhApplicationsFiltered();
+    setIsLoading(false);
+  }, [isLoading]);
 
   return (
     <>
       <div>
-        <h3>Hello Admin of {orgName}</h3>
-
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <h3>Hello Admin of {orgName}</h3>
+          <Button
+            onClick={() => {
+              setFilterModal(true);
+            }}
+            style={{ marginLeft: 30 }}
+          >
+            Filter
+          </Button>
+          <Button
+            onClick={() => {
+              setFilterEmail("");
+              setFilterApprovedBy("");
+              setFilterStatus("");
+              setFilterReason("");
+              getWfhApplicationsFiltered();
+            }}
+            style={{ marginLeft: 30 }}
+          >
+            Remove Filter
+          </Button>
+            
+        </div>
         <Table data={allApplication} autoHeight={true}>
           <Column flexGrow={1} align="center" resizable={true}>
             <HeaderCell>Email</HeaderCell>
@@ -104,7 +148,9 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
                   <ButtonGroup>
                     <Button
                       onClick={() => {
-                        leaveReq(0);
+                        setID(rowData._id);
+                        leaveReq(0,rowData._id);
+                        setIsLoading(true);
                       }}
                       appearance="ghost"
                       active
@@ -114,8 +160,8 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
                     </Button>
                     <Button
                       onClick={() => {
-                        setID(rowData._id)
-                        setRejectionReasonForm(true)
+                        setID(rowData._id);
+                        setRejectionReasonForm(true);
                       }}
                       appearance="ghost"
                       active
@@ -127,9 +173,9 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
                 ) : (
                   <>
                     {rowData.status === 0 ? (
-                      <>Leave Approved</>
+                      <><label style={{color:"Green"}}>Approved</label></>
                     ) : (
-                      <>Leave Rejected </>
+                      <><label style={{color:"Red"}}>Rejected</label></>
                     )}
                   </>
                 )
@@ -143,7 +189,6 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
         </Table>
       </div>
 
-
       <Modal overflow={true} open={rejectionReasonForm} onClose={handleClose}>
         <Modal.Header>
           <Modal.Title>Rejection</Modal.Title>
@@ -155,11 +200,19 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
               type={"text"}
               onChange={setValueRejectReason}
               style={{ marginBottom: 10 }}
+              required
             />
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={()=>{leaveReq(1)}} appearance="primary" active>
+          <Button
+            onClick={() => {
+              leaveReq(1,ID);
+              setIsLoading(true);
+            }}
+            appearance="primary"
+            active
+          >
             Submit
           </Button>
           <Button onClick={handleClose} appearance="subtle">
@@ -168,7 +221,68 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
         </Modal.Footer>
       </Modal>
 
+      <Modal open={FilterModal} onClose={closeFilterModal}>
+        <ModalHeader>
+          <Modal.Title>Filter</Modal.Title>
+        </ModalHeader>
+        <ModalBody>
+          <Input
+            placeholder="Filter specific Email"
+            type={"email"}
+            onChange={(value) => {
+              setFilterEmail(value);
+            }}
+            style={{ marginBottom: 10 }}
+          />
+          <Input
+            placeholder="Filter Reason"
+            type={"text"}
+            onChange={(value) => {
+              setFilterReason(value);
+            }}
+            style={{ marginBottom: 10 }}
+          />
+          <SelectPicker
+            placeholder="Filter Status"
+            data={statusOptions}
+            onChange={(value) => {
+              setFilterStatus(value);
+            }}
+            style={{ marginBottom: 10, width: "100%" }}
+          />
+          <Input
+            placeholder="Filter Updated By"
+            type={"email"}
+            onChange={(value) => {
+              setFilterApprovedBy(value);
+            }}
+            style={{ marginBottom: 10 }}
+          />
+                    {/* <Input
+            placeholder="Filter Availed By"
+            type={"date"}
+            // onChange={(value) => {
+            // }}
+            style={{ marginBottom: 10 }}
+          /> */}
 
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            onClick={() => {
+              closeFilterModal();
+              getWfhApplicationsFiltered();
+            }}
+            appearance="primary"
+            active
+          >
+            Apply
+          </Button>
+          <Button onClick={closeFilterModal} appearance="subtle">
+            Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   );
 }

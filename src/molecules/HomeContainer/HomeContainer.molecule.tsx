@@ -12,12 +12,12 @@ export default function Homecontainer() {
         <div className='homecontainer'>
             <h1>Welcome to WFH</h1>
             <div className='homebox'>
-                <div className='sysbox' onClick={() => { navigate("/sys-register") }}>
+                <div className='sysbox' onClick={() => { navigate("/sys/login") }}>
                     <img src={sysusericon} alt="sysuser_icon" />
                     <h3>System User</h3>
                 </div>
                 <MyDivider />
-                <div className='orgbox' onClick={() => { navigate("/org-register") }}>
+                <div className='orgbox' onClick={() => { navigate("/org/login") }}>
                     <img src={orgusericon} alt="orguser_icon" />
                     <h3>Organisation User</h3>
                 </div>

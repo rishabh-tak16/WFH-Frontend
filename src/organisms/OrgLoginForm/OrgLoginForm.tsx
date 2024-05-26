@@ -1,12 +1,12 @@
-import { Input, Button, SelectPicker } from "rsuite";
+import { Input, Button, SelectPicker, Loader } from "rsuite";
 import { useState } from "react";
-import { useEffect } from "react";
 import axios from "axios";
-import { Loader } from 'rsuite';
 import classNames from "classnames/bind";
 import { useNavigate } from "react-router-dom";
 import styles from "./OrgLoginForm.module.scss";
-import { Cookies } from "react-cookie";
+import Cookies from "js-cookie";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function OrgLoginForm() {
   const [email, setEmail] = useState("");
@@ -14,49 +14,81 @@ export default function OrgLoginForm() {
   const [otpSent, setOtpSent] = useState(false);
   const [organizationValue, setOrganizationValue] = useState("");
   const [org, setOrg] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const cx = classNames.bind(styles);
 
   const navigate = useNavigate();
-  const cookies = new Cookies();
   const orglist = org.map((item) => ({ label: item, value: item }));
 
-  const handleSubmit = (e: React.SyntheticEvent) => {
+  const validateEmail = (email:string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSubmit = (e:React.SyntheticEvent) => {
     e.preventDefault();
-    cookies.set("organizationValue", organizationValue);
+    if (!organizationValue) {
+      toast.error("Please Select Organization");
+      return;
+    }
+    if (!email) {
+      setEmailError("Email field cannot be empty");
+      return;
+    }
+    Cookies.set("organizationValue", organizationValue);
     OrgUserLoginRequest({ email, otp });
   };
 
-  const OrgUserLoginRequest = async ({ email, otp }: any) => {
+  const OrgUserLoginRequest = async ({ email, otp }:any) => {
     const URL = "http://localhost:5000/orguser-login";
     try {
       const resp = await axios.post(URL, { email, otp });
-      cookies.set("email", email);
-      cookies.set("accessToken", resp.data.accessToken);
-
-      navigate("/org-dashboard");
-      return;
+      Cookies.set("email", email);
+      Cookies.set("accessToken", resp.data.accessToken);
+      navigate("/org/dashboard");
     } catch (err) {
       console.log(err);
       alert("Invalid Login Credential");
-      return;
     }
   };
 
-  const userOrganizations = async (email: string) => {
+  const userOrganizations = async (email:string) => {
+    if (!email) {
+      setEmailError("Email field cannot be empty");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setEmailError("Invalid Email Format");
+      return;
+    }
+    setEmailError("");
+    setLoading(true);
     const URL = "http://localhost:5000/find-user";
     try {
       const api = await axios.post(URL, { email: email });
       setOrg(api.data.data);
-      console.log("API data:", api.data);
+      setLoading(false);
     } catch (err) {
       console.error("Error in userOrganizations:", err);
       setOrg([]);
+      setLoading(false);
     }
   };
 
-  const sendOtp = async (e: React.FormEvent) => {
+  const sendOtp = async (e:React.SyntheticEvent) => {
     e.preventDefault();
+    if (!email) {
+      setEmailError("Email field cannot be empty");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setEmailError("Invalid Email Format");
+      return;
+    }
+    setEmailError("");
+    setLoading(true);
     const URL = `http://localhost:5000/mail/${email}`;
     try {
       const headers = {
@@ -64,56 +96,52 @@ export default function OrgLoginForm() {
       };
       const resp = await axios.get(URL, { headers });
       setOtpSent(true);
+      toast.success("OTP sent successfully!");
+      setLoading(false);
       return resp;
     } catch (err) {
       console.log(err);
-      return {
-        data: {
-          msg: "Can't send Otp",
-        },
-        status: "400",
-      };
+      toast.error("Can't send OTP");
+      setLoading(false);
     }
   };
-
-  // useEffect(() => {
-  //   if (email) {
-  //     userOrganizations(email);
-  //   }
-  // }, [email]);
 
   return (
     <div className={cx("logcontainerr")}>
       <form>
         <div className={cx("wrapperr")}>
-          <h2>Login Form</h2>
+          <h2>Login</h2>
           <div className={cx("formboxx")}>
             <div>
-              {/* <label>Email: </label> */}
+              <label>Email<span style={{ color: "red" }}>*</span></label>
               <Input
+                id="email"
                 type="email"
                 placeholder="E-mail"
-                style={{ marginBottom: 10, marginTop: 10, width: 300 }}
+                style={{ marginBottom: 12, marginTop: 8, width: 300 }}
                 value={email}
                 onChange={(value) => setEmail(value)}
                 required
               />
+              {emailError && <div style={{ color: "red", marginBottom: 10 }}>{emailError}</div>}
             </div>
-            <SelectPicker
-              data={orglist}
-              onOpen={() => userOrganizations(email)}
-              onChange={(value: string | undefined | void | null) => {
-                if (typeof value === "string") {
-                  setOrganizationValue(value);
-                }
-                console.log("orgnaization value-->>>", value);
-              }}
-              searchable={false}
-              style={{ width: 300, marginBottom: 10, marginTop: 14 }}
-              placeholder="Select Organizations"
-            />
+            <div>
+              <label >Select Organization<span style={{ color: "red" }}>*</span></label><br/>
+              <SelectPicker
+                id="organization"
+                data={orglist}
+                onOpen={() => userOrganizations(email)}
+                onChange={(value) => {
+                  if (typeof value === "string") {
+                    setOrganizationValue(value);
+                  }
+                }}
+                searchable={false}
+                style={{ width: 300, marginBottom: 2, marginTop: 10 }}
+                placeholder="Select Organizations"
+              />
+            </div>
             <br />
-
             {!otpSent ? (
               <Button
                 type="submit"
@@ -121,49 +149,37 @@ export default function OrgLoginForm() {
                 size="lg"
                 style={{ height: 35 }}
                 onClick={sendOtp}
+                disabled={loading}
               >
-                Send OTP
+                {loading ? <Loader content="Sending..." /> : "Send OTP"}
               </Button>
             ) : (
               <>
+                <div style={{marginTop:-5}}>
+                <label>OTP<span style={{ color: "red" }}>*</span></label>
                 <Input
                   type="text"
                   placeholder="OTP"
-                  style={{ marginBottom: 10, width: 300 }}
+                  style={{ marginTop:8,marginBottom: 10, width: 300 }}
                   value={otp}
                   onChange={(value) => setOTP(value)}
                 />
+                </div>
                 <Button
                   type="submit"
                   appearance="primary"
                   size="lg"
                   onClick={handleSubmit}
+                  disabled={loading}
                 >
-                  Login
+                  {loading ? <Loader content="Logging in..." /> : "Login"}
                 </Button>
               </>
             )}
-            {/* <Button
-                type="submit"
-                appearance="ghost"
-                size="lg"
-                style={{ height: 35 }}
-                onClick={sendOtp}
-              >
-                Send OTP
-              </Button>
-            </div>
-            <Button
-              type="submit"
-              appearance="primary"
-              size="lg"
-              onClick={handleSubmit}
-            >
-              Login
-            </Button> */}
           </div>
         </div>
       </form>
+      <ToastContainer />
     </div>
   );
 }

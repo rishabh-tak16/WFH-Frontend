@@ -1,143 +1,138 @@
 import { useState } from "react";
-import { Input, Button } from "rsuite";
+import { Input, Button, Loader } from "rsuite";
 import axios from "axios";
 import classNames from "classnames/bind";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
-import Cookie from 'js-cookie'
+import "react-toastify/dist/ReactToastify.css";
+import Cookie from "js-cookie";
 
 import styles from "./SysLoginForm.module.scss";
 
-
 export default function SysLoginform() {
-
   const [email, setEmail] = useState("");
   const [otp, setOTP] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const cx = classNames.bind(styles);
-
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
     SysUserLoginRequest({ email, otp });
-    console.log(email, otp);
+  };
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
   };
 
   const sendOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const URL = `http://localhost:5000/mail/${email}`
+    e.preventDefault();
+    if (!validateEmail(email)) {
+      setEmailError("Invalid Email Format");
+      return;
+    }
+    setEmailError("");
+    setLoading(true);
+    const URL = `http://localhost:5000/mail/${email}`;
     try {
       const headers = {
         "Content-Type": "application/json",
       };
-      const resp = await axios.get(URL,{ headers });
+      const resp = await axios.get(URL, { headers });
       setOtpSent(true);
+      toast.success("OTP sent successfully!");
+      setLoading(false);
       return resp;
-  
     } catch (err) {
       console.log(err);
+      toast.error("Invalid Email");
+      setLoading(false);
       return {
         data: {
-          msg: "Can't send Otp"
-        }, 
-        status: "400"
-      }
-    }
-  }
-
-  const SysUserLoginRequest = async ({ email, password, otp }: any) => {
-    const URL = "http://localhost:5000/sysuser-login";
-    try {
-      const resp = await axios.post(
-        URL,
-        { email, otp }
-      );
-      console.log(resp);
-        toast.success("Login Sucessfully")
-        console.log(resp.data.accessToken);
-        Cookie.set('accessToken', resp.data.accessToken)
-        navigate("/sys-dashboard");
-        
-    } catch (err) {
-      console.log(err);
-      toast.error("Invalid Login Credential")
-      return "Login Error";
+          msg: "Can't send Otp",
+        },
+        status: "400",
+      };
     }
   };
+
+  const SysUserLoginRequest = async ({ email, otp }: { email: string, otp: string }) => {
+    const URL = `http://localhost:5000/sysuser-login?email=${email}&otp=${otp}`;
+    try {
+        const resp = await axios.get(URL);
+        toast.success("Login Successfully");
+        Cookie.set("accessToken", resp.data.accessToken);
+        navigate("/sys/dashboard");
+    } catch (err) {
+        console.log(err);
+        toast.error("Invalid Login Credential");
+        return "Login Error";
+    }
+};
+
 
   return (
     <>
       <div className={cx("logcontainer")}>
-        <form >
+        <form>
           <div className={cx("wrapper")}>
-            <h2>Login Form</h2>
+            <h2>Login</h2>
             <div className={cx("formbox")}>
               <div>
-                <label>Email: </label>
+                <label>Email<span style={{ color: "red" }}>*</span></label>
                 <Input
-                  type={"email"}
-                  placeholder={"E-mail"}
-                  style={{ marginBottom: 10, width: 300 }}
-                  onChange={(value) => {
-                    setEmail(value);
-                  }}
+                  type="email"
+                  placeholder="E-mail"
+                  style={{ marginBottom: 10, marginTop:10,width: 300 }}
+                  onChange={(value) => setEmail(value)}
                   required
                 />
+                {emailError && (
+                  <div style={{ color: "red", marginBottom: 10 }}>{emailError}</div>
+                )}
               </div>
-              <div>
-              </div>
-              <div className={styles.otpcontainer}>
-                </div>
-                {!otpSent ? (
-              <Button
-                type="submit"
-                appearance="ghost"
-                size="lg"
-                style={{ height: 35 }}
-                onClick={sendOtp}
-              >
-                Send OTP
-              </Button>
-            ) : (
-              <>
-                <Input
-                  type="text"
-                  placeholder="OTP"
-                  style={{ marginBottom: 10, width: 300 }}
-                  value={otp}
-                  onChange={(value) => setOTP(value)}
-                />
+              <div></div>
+              <div className={styles.otpcontainer}></div>
+              {!otpSent ? (
                 <Button
-                  type="submit"
-                  appearance="primary"
-                  size="lg"
-                  onClick={handleSubmit}
-                >
-                  Login
-                </Button>
-              </>
-            )}
-                {/* <Button
                   type="submit"
                   appearance="ghost"
                   size="lg"
                   style={{ height: 35 }}
                   onClick={sendOtp}
+                  disabled={loading}
                 >
-                  Send OTP
+                  {loading ? <Loader content="Sending..." /> : "Send OTP"}
                 </Button>
-              </div>
-              <Button
-                type="submit"
-                appearance="primary"
-                size="lg"
-                onClick={handleSubmit}
-              >
-                Login
-              </Button> */}
+              ) : (
+                <>
+                  <Input
+                    type="text"
+                    placeholder="OTP"
+                    style={{ marginBottom: 10, width: 300 }}
+                    value={otp}
+                    onChange={(value) => setOTP(value)}
+                  />
+                  <label style={{ marginTop: 10, marginBottom: 10 }}>
+                    Didn't get the OTP?{" "}
+                    <Link to="#" onClick={sendOtp}>
+                      Resend
+                    </Link>
+                  </label>
+                  <Button
+                    type="submit"
+                    appearance="primary"
+                    size="lg"
+                    onClick={handleSubmit}
+                  >
+                    Login
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </form>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Cookies } from "react-cookie";
+import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminPanelModule from "../../organisms/AdminPanel/AdminPanel.module";
@@ -22,14 +22,14 @@ export default function OrgDashboard() {
   const { Column, HeaderCell, Cell } = Table;
 
   const navigate = useNavigate();
-  const cookies = new Cookies();
-  const userEmail = cookies.get("email");
-  const orgValue = cookies.get("organizationValue");
+  const userEmail = Cookies.get("email");
+  const orgValue = Cookies.get("organizationValue");
 
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [updated, setUpdated] = useState(false);
   const [allApplication, setAllApplication] = useState<Application[]>([]);
   const [leaveCount, setLeaveCount] = useState(0);
@@ -121,27 +121,31 @@ export default function OrgDashboard() {
 
       setAllApplication(application.data.applications);
       setLeaveCount(application.data.applications.length);
-      setUpdated(!updated);
+      // setUpdated(!updated);
     } catch (err) {
       console.log(err);
     }
   };
 
-  useEffect(() => {
-    const token = cookies.get('accessToken');
+  useEffect(()=>{
+    const token = Cookies.get('accessToken');
     if (!token) navigate('/');
     checkAdmin();
+  }, [])
+
+  useEffect(() => {
     getUserApplications();
-  }, [updated]);
+    setIsLoading(false);
+  }, [isLoading]);  
 
   return (
     <>
       <Button
         onClick={() => {
-          cookies.remove("accessToken");
-          cookies.remove("email");
-          cookies.remove("organizationValue");
-          navigate("/org-login");
+          Cookies.remove("accessToken");
+          Cookies.remove("email");
+          Cookies.remove("organizationValue");
+          navigate("/");
         }}
       >
         Logout
@@ -160,6 +164,7 @@ export default function OrgDashboard() {
           <div>
             <h4>Total Leaves Applied: {leaveCount}</h4>
           </div>
+          {/* Leave Application Table */}
           <Table height={420} style={{ marginTop: 10 }} data={allApplication}>
             <Column width={200} resizable>
               <HeaderCell>
@@ -182,7 +187,7 @@ export default function OrgDashboard() {
               <HeaderCell>
                 <b>Status</b>
               </HeaderCell>
-              <Cell>{(rowData) => { if (rowData.status === 2) return "Pending"; else if (rowData.status === 0) return "Approved"; else return "Rejected" }}</Cell>
+              <Cell>{(rowData) => { if (rowData.status === 2) return <label style={{color:"grey"}}>Pending</label>; else if (rowData.status === 0) return <label style={{color:"green"}}>Approved</label>; else return <label style={{color:"red"}}>Rejected</label> }}</Cell>
             </Column>
             <Column width={250} resizable>
               <HeaderCell>
@@ -201,11 +206,12 @@ export default function OrgDashboard() {
           </Table>
         </>
       )}
-
+      
+      {/* Apply Leave Modal */}
       <Modal overflow={true} open={open} onClose={handleClose}>
         <Modal.Header>
           <Modal.Title>
-            <h4>Leave Application</h4>
+            <strong>Leave Application</strong>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -227,6 +233,7 @@ export default function OrgDashboard() {
             onClick={() => {
               handleClose();
               leaveApplication();
+              setIsLoading(true);
             }}
             appearance="primary"
           >

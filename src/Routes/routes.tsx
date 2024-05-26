@@ -13,13 +13,13 @@ export default function AppRoutes() {
       <Routes>
         <Route path='/' element={<Homepage />} />
         
-        <Route path='/sys-register' element={<SysRegisterpage />} />
-        <Route path='/sys-login' element={<SysLoginpage />} />
-        <Route path='/sys-dashboard' element={<SysDashboard/>}/>
+        <Route path='/sys/register' element={<SysRegisterpage />} />
+        <Route path='/sys/login' element={<SysLoginpage />} />
+        <Route path='/sys/dashboard' element={<SysDashboard/>}/>
         
-        <Route path='/org-register' element={<OrgRegisterPage/>} />
-        <Route path='/org-login' element={<OrgLoginPage />} />
-        <Route path='/org-dashboard' element={<OrgDashboard/>}/>
+        <Route path='/org/register' element={<OrgRegisterPage/>} />
+        <Route path='/org/login' element={<OrgLoginPage />} />
+        <Route path='/org/dashboard' element={<OrgDashboard/>}/>
       </Routes>
     </BrowserRouter>
   )

@@ -31,7 +31,7 @@ export default function RegisterForm() {
         formData
       );
       toast.success("User registered Sucessfully")
-      navigate("/sys-login")
+      navigate("/sys/dashboard")
       console.log(response);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -98,7 +98,7 @@ export default function RegisterForm() {
             </Button>
             <label style={{ marginTop: 20 }}>
               Already a User?
-              <Link to={"/sys-login"} style={{ marginLeft: 3 }}>
+              <Link to={"/sys/login"} style={{ marginLeft: 3 }}>
                 Login
               </Link>
             </label>

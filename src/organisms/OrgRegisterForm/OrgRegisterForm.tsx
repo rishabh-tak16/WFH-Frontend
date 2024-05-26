@@ -17,6 +17,8 @@ export default function OrgRegisterForm() {
   const [dob, setDOB] = useState("");
   const [doj, setDOJ] = useState("");
 
+  const todayDate = new Date().toISOString().split('T')[0];
+
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,11 +30,11 @@ export default function OrgRegisterForm() {
         "http://localhost:5000/orguser-register",
         { organizationName, firstName, lastName, email, dob, doj }
       );
-      toast.success("User registered Sucessfully")
+      toast.success("User registered Sucessfully");
       console.log(response);
-      navigate("/org-login");
+      navigate("/sys/dashboard");
     } catch (error: any) {
-      toast.error("Something Problematic");
+      toast.error("Organization does not exists");
       console.error("Error submitting form:", error.response.data.msg);
     }
   };
@@ -100,6 +102,7 @@ export default function OrgRegisterForm() {
                   onChange={(value) => {
                     setDOB(value);
                   }}
+                  max={todayDate}
                   required
                 />
               </div>
@@ -111,18 +114,18 @@ export default function OrgRegisterForm() {
                   onChange={(value) => {
                     setDOJ(value);
                   }}
+                  min={dob}
                   required
                 />
               </div>
+              <div style={{marginTop:20}}>
               <Button type="submit" appearance="primary" size="lg">
                 Register
               </Button>
-              <label style={{ marginTop: 20 }}>
-                Already a User?
-                <Link to={"/org-login"} style={{ marginLeft: 3 }}>
-                  Login
-                </Link>
-              </label>
+              <Button appearance="ghost" size="lg" style={{marginLeft:10}}>
+                Cancel
+              </Button>
+              </div>
             </div>
           </div>
         </form>
