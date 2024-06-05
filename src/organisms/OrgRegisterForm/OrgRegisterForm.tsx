@@ -16,10 +16,22 @@ export default function OrgRegisterForm() {
   const [email, setEmail] = useState("");
   const [dob, setDOB] = useState("");
   const [doj, setDOJ] = useState("");
+  const [organizations,setOrganizations] = useState([]);
 
   const todayDate = new Date().toISOString().split('T')[0];
 
   const navigate = useNavigate()
+
+  // const AllOrganization = async () => {
+  //   const URL = "http://localhost:5000/organization";
+  //   try {
+  //     const response = await axios.get(URL);
+
+  //     setOrganizations(response.data.organizations);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -122,7 +134,7 @@ export default function OrgRegisterForm() {
               <Button type="submit" appearance="primary" size="lg">
                 Register
               </Button>
-              <Button appearance="ghost" size="lg" style={{marginLeft:10}}>
+              <Button appearance="ghost" size="lg" style={{marginLeft:10}} onClick={() => navigate("/sys/dashboard")}>
                 Cancel
               </Button>
               </div>

@@ -66,6 +66,7 @@ export default function SysLoginform() {
         const resp = await axios.get(URL);
         toast.success("Login Successfully");
         Cookie.set("accessToken", resp.data.accessToken);
+        Cookie.set("type","sysuser");
         navigate("/sys/dashboard");
     } catch (err) {
         console.log(err);

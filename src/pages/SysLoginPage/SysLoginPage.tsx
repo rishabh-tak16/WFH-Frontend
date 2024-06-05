@@ -9,7 +9,8 @@ export default function SysLoginpage() {
 
   useEffect(() => {
     const token = Cookies.get('accessToken');
-    if (token) {
+    const type = Cookies.get('type');
+    if (token && type) {
       navigate('/sys/dashboard');
     }
   }, []);

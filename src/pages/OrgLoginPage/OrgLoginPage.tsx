@@ -9,7 +9,8 @@ export default function OrgLoginPage() {
 
   useEffect(() => {
     const token = Cookies.get('accessToken');
-    if (token) {
+    const type = Cookies.get('type')
+    if (token && type === "orguser") {
       navigate('/org/dashboard');
     }
   }, []);

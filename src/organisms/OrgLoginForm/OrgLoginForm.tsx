@@ -38,13 +38,27 @@ export default function OrgLoginForm() {
       return;
     }
     Cookies.set("organizationValue", organizationValue);
+    Cookies.set("type","orguser");
     OrgUserLoginRequest({ email, otp });
   };
 
+  // const OrgUserLoginRequest = async ({ email, otp }:any) => {
+  //   const URL = "http://localhost:5000/orguser-login";
+  //   try {
+  //     const resp = await axios.post(URL, { email, otp });
+  //     Cookies.set("email", email);
+  //     Cookies.set("accessToken", resp.data.accessToken);
+  //     navigate("/org/dashboard");
+  //   } catch (err) {
+  //     console.log(err);
+  //     alert("Invalid Login Credential");
+  //   }
+  // };
+
   const OrgUserLoginRequest = async ({ email, otp }:any) => {
-    const URL = "http://localhost:5000/orguser-login";
+    const URL = `http://localhost:5000/orguser-login?email=${email}&otp=${otp}`;
     try {
-      const resp = await axios.post(URL, { email, otp });
+      const resp = await axios.get(URL);
       Cookies.set("email", email);
       Cookies.set("accessToken", resp.data.accessToken);
       navigate("/org/dashboard");

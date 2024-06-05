@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, ButtonGroup, Modal, Input, SelectPicker } from "rsuite";
+import { Table, Button, ButtonGroup, Modal, Input, SelectPicker, Nav,Navbar } from "rsuite";
+import ExitIcon from '@rsuite/icons/Exit';
 import axios from "axios";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 import ModalHeader from "rsuite/esm/Modal/ModalHeader";
 import ModalBody from "rsuite/esm/Modal/ModalBody";
 import ModalFooter from "rsuite/esm/Modal/ModalFooter";
+import FunnelIcon from '@rsuite/icons/Funnel';
+import { toast } from "react-toastify";
 
 type Application = {
   approvedDate: string;
@@ -23,13 +28,13 @@ type AdminProp = {
 function AdminPanel({ orgName, userEmail }: AdminProp) {
   const { Column, HeaderCell, Cell } = Table;
   const [allApplication, setAllApplication] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   //states for filter
   const [filterEmail, setFilterEmail] = useState("");
   const [filterReason, setFilterReason] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | number | null>(null);
   const [filterApprovedBy, setFilterApprovedBy] = useState("");
+  const [filterAvailedAt, setFilterAvailedAt] = useState<Date|null|string>();
 
   const [rejectReason, setRejectReason] = useState("");
   const [ID, setID] = useState("");
@@ -39,13 +44,15 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
   const handleClose = () => setRejectionReasonForm(false);
   const closeFilterModal = () => setFilterModal(false);
 
+  const navigate = useNavigate();
+
   const setValueRejectReason = (value: string) => {
     setRejectReason(value);
   };
 
   const getWfhApplicationsFiltered = async () => {
-    const URL = `http://localhost:5000/all-application/${orgName}/filter?email=${filterEmail}&reason=${filterReason}&status=${filterStatus}&approvedBy=${filterApprovedBy}`;
-    console.log(URL);
+    const URL = `http://localhost:5000/all-application/${orgName}/filter?email=${filterEmail}&reason=${filterReason}&status=${filterStatus}&approvedBy=${filterApprovedBy}&createdDate=${filterAvailedAt}`;
+    console.log("filterDAte>>>>",filterAvailedAt);
     
     try {
       const application = await axios.get(URL);
@@ -57,6 +64,7 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
     setFilterReason("");
     setFilterApprovedBy("");
     setFilterStatus("");
+    setFilterAvailedAt(null);
   };
 
   const statusOptions = [
@@ -71,6 +79,11 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
       return;
     }
 
+    if(status === 1 && rejectReason === "") {
+      toast.error("Reason is required");
+      return ;
+    }
+
     const URL = "http://localhost:5000/application/status";
 
     try {
@@ -81,7 +94,6 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
         rejectedReason: rejectReason,
       });
 
-      console.log(api.data);
     } catch (err) {
       console.log(err);
     }
@@ -89,26 +101,30 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
     setRejectReason("");
     setID("");
     handleClose();
+    getWfhApplicationsFiltered();
   };
 
   useEffect(() => {    
     getWfhApplicationsFiltered();
-    setIsLoading(false);
-  }, [isLoading]);
+  }, []);
 
   return (
     <>
       <div>
-        <div style={{ display: "flex", flexDirection: "row" }}>
-          <h3>Hello Admin of {orgName}</h3>
+      <Navbar>
+        <Navbar.Brand >Admin Dashboard - {orgName}</Navbar.Brand>
+          <Nav pullRight>
+          <Nav.Item>
           <Button
+          startIcon={<FunnelIcon/>}
             onClick={() => {
               setFilterModal(true);
             }}
-            style={{ marginLeft: 30 }}
           >
             Filter
           </Button>
+          </Nav.Item>
+          <Nav.Item>
           <Button
             onClick={() => {
               setFilterEmail("");
@@ -117,12 +133,30 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
               setFilterReason("");
               getWfhApplicationsFiltered();
             }}
-            style={{ marginLeft: 30 }}
           >
             Remove Filter
           </Button>
-            
-        </div>
+          </Nav.Item>
+          <Nav.Item>
+            {" "}
+            <Button
+              startIcon={<ExitIcon/>}
+              appearance="ghost"
+              color="red"
+              onClick={() => {
+                Cookies.remove("accessToken");
+                Cookies.remove("email");
+                Cookies.remove("organizationValue");
+                Cookies.remove("type");
+                navigate("/");
+              }}
+            >
+              Logout
+            </Button>
+          </Nav.Item>
+          </Nav>
+          </Navbar>
+
         <Table data={allApplication} autoHeight={true}>
           <Column flexGrow={1} align="center" resizable={true}>
             <HeaderCell>Email</HeaderCell>
@@ -150,7 +184,7 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
                       onClick={() => {
                         setID(rowData._id);
                         leaveReq(0,rowData._id);
-                        setIsLoading(true);
+                        // getWfhApplicationsFiltered();
                       }}
                       appearance="ghost"
                       active
@@ -208,7 +242,6 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
           <Button
             onClick={() => {
               leaveReq(1,ID);
-              setIsLoading(true);
             }}
             appearance="primary"
             active
@@ -221,7 +254,7 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
         </Modal.Footer>
       </Modal>
 
-      <Modal open={FilterModal} onClose={closeFilterModal}>
+      <Modal open={FilterModal} onClose={closeFilterModal} size={"xs"}>
         <ModalHeader>
           <Modal.Title>Filter</Modal.Title>
         </ModalHeader>
@@ -258,13 +291,13 @@ function AdminPanel({ orgName, userEmail }: AdminProp) {
             }}
             style={{ marginBottom: 10 }}
           />
-                    {/* <Input
-            placeholder="Filter Availed By"
-            type={"date"}
-            // onChange={(value) => {
-            // }}
-            style={{ marginBottom: 10 }}
-          /> */}
+          <Input
+          type="date"
+          onChange={(value) => {
+            setFilterAvailedAt(value);
+          }}
+          style={{ marginBottom: 10 }}
+          />
 
         </ModalBody>
         <ModalFooter>
